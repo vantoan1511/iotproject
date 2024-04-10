@@ -5,11 +5,14 @@ import com.iotproject.repository.MoistureRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 @Service
+@Transactional
 public class MoistureServiceImpl implements IMoistureService {
 
     private final MoistureRepository moistureRepository;
@@ -24,6 +27,11 @@ public class MoistureServiceImpl implements IMoistureService {
     }
 
     @Override
+    public List<Moisture> getAllLogs() {
+        return moistureRepository.findAll();
+    }
+
+    @Override
     public Page<Moisture> getAllLogs(Pageable pageable) {
         return moistureRepository.findAll(pageable);
     }
@@ -32,5 +40,17 @@ public class MoistureServiceImpl implements IMoistureService {
     public Moisture save(Moisture moisture) {
         moisture.setCreatedDate(Date.from(Instant.now()));
         return moistureRepository.save(moisture);
+    }
+
+    @Override
+    public void delete(Long id) {
+        moistureRepository.deleteById(id);
+    }
+
+    @Override
+    public void delete(List<Long> ids) {
+        for (long id : ids) {
+            delete(id);
+        }
     }
 }
