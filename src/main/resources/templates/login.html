@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template.html}"
+      lang="vi">
+<head>
+    <title layout:fragment="title">Đăng nhập</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+    <div th:if="${param.error}" class="text-center">
+        <div class="alert alert-danger" role="alert">
+            Thông tin đăng nhập không hợp lệ!
+        </div>
+    </div>
+    <div th:if="${param.logout}" class="text-center">
+        <div class="alert alert-success" role="alert">
+            Bạn đã đăng xuất!
+        </div>
+    </div>
+    <div class="card" style="width: 18rem; margin: 0 auto">
+        <div class="card-body">
+            <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Tên đăng nhập</label>
+                    <input autofocus type="text" class="form-control" id="username" name="username">
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Mật khẩu</label>
+                    <input type="password" class="form-control" id="password" name="password">
+                </div>
+                <button type="submit" class="btn btn-success">Đăng nhập</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
