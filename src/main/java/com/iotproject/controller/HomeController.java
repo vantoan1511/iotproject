@@ -12,4 +12,19 @@ public class HomeController {
     public String getHome() {
         return "index";
     }
+
+    @GetMapping("templogs")
+    public String getTempLogs() {
+        return "templogs";
+    }
+
+    @GetMapping("moisturelogs")
+    public String getMoistureLogs() {
+        return "moisturelogs";
+    }
+
+    @GetMapping("login")
+    public String getLoginPage() {
+        return "login";
+    }
 }
