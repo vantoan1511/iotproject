@@ -10,34 +10,134 @@
 <body>
 
 <div layout:fragment="content">
-    <div class="row">
-        <div class="col-md-6">
-            <div id="chart" style="max-width: 650px; margin: 0 auto;"></div>
+    <div class="card my-2">
+        <div class="card-header">
+            <h3 class="card-title">Thiết bị</h3>
         </div>
-        <div class="col-md-6">
-            <div id="chart2" style="max-width: 650px; margin: 0 auto;"></div>
+        <div class="card-body">
+            <table id="table"
+                   class="table table-striped table-hover"
+                   data-click-to-select="true"
+                   data-toggle="table"
+                   data-locale="vi-VN"
+                   data-search="true"
+                   data-show-toggle="true"
+                   data-toolbar="#toolbar"
+                   data-show-columns="true"
+                   data-mobile-responsive="true"
+                   data-check-on-init="true">
+                <thead>
+                <tr>
+                    <th data-field="id" data-sortable="true">STT</th>
+                    <th data-field="device-name" data-sortable="true">Tên thiết bị</th>
+                    <th data-field="device-status" data-sortable="true">Tình trạng</th>
+                    <th>Thao tác</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>Cảm biến độ ẩm</td>
+                    <td>Đang hoạt động</td>
+                    <td>
+                        <a th:href="@{/moisturelogs}" class="btn btn-primary">Xem</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>2</td>
+                    <td>Cảm biến nhiệt độ</td>
+                    <td>Đang hoạt động</td>
+                    <td>
+                        <a th:href="@{/templogs}" class="btn btn-primary">Xem</a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer"></div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Biểu đồ</h3>
+        </div>
+        <div class="card-body row">
+            <div class="col-md-6">
+                <div id="chart" style="max-width: 650px; margin: 0 auto;"></div>
+            </div>
+            <div class="col-md-6">
+                <div id="chart2" style="max-width: 650px; margin: 0 auto;"></div>
+            </div>
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script>
-        var options = {
-            chart: {
-                type: 'line'
-            },
-            series: [{
-                name: 'sales',
-                data: [30, 40, 35, 50, 49, 60, 70, 91, 125]
-            }],
-            xaxis: {
-                categories: [1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999]
+        $(function () {
+            renderChart();
+        });
+
+        function renderChart() {
+            var options1 = {
+                title: {
+                    text: 'Bieu do nhiet do'
+                },
+                chart: {
+                    type: 'line'
+                },
+                series: [{
+                    name: 'sales',
+                    data: []
+                }],
+                xaxis: {
+                    type: 'datetime'
+                }
             }
+            var options2 = {
+                title: {
+                    text: "Bieu do do am"
+                },
+                chart: {
+                    type: 'line'
+                },
+                series: [{
+                    name: 'sales',
+                    data: []
+                }],
+                xaxis: {
+                    type: 'datetime'
+                }
+            }
+
+            var chart = new ApexCharts(document.querySelector("#chart"), options1);
+            var chart2 = new ApexCharts(document.querySelector("#chart2"), options2);
+
+            chart.render();
+            chart2.render();
+
+            var data = [];
+            $.ajax('/v1/api/templogs?unpaged=true').then(function (result) {
+                $.each(result, function (i, e) {
+                    let record = []
+                    record.push(e.createdDate)
+                    record.push(e.value)
+                    data.push(record)
+                })
+                chart.updateSeries([{
+                    data: data
+                }])
+            })
+            var data2 = []
+            $.ajax('/v1/api/moisturelogs?unpaged=true').then(function (result) {
+                $.each(result, function (i, e) {
+                    let record = []
+                    record.push(e.createdDate)
+                    record.push(e.value)
+                    data2.push(record)
+                })
+                chart2.updateSeries([{
+                    data: data2
+                }])
+            })
         }
-
-        var chart = new ApexCharts(document.querySelector("#chart"), options);
-        var chart2 = new ApexCharts(document.querySelector("#chart2"), options);
-
-        chart.render();
-        chart2.render();
     </script>
 </div>
 
