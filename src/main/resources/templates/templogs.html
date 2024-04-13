@@ -40,7 +40,7 @@
                     <th data-field="state" data-checkbox="true"></th>
                     <th data-field="id" data-sortable="true">STT</th>
                     <th data-field="value" data-sortable="true">Giá trị (độ C)</th>
-                    <th data-field="createdDate" data-sortable="true">Cập nhật</th>
+                    <th data-field="createdDate" data-sortable="true" data-formatter="dateFormatter">Cập nhật</th>
                 </tr>
                 </thead>
             </table>
@@ -48,7 +48,7 @@
         <div class="card-footer">
         </div>
     </div>
-
+    <script th:src="@{/js/utils.js}"></script>
     <script>
         var $table = $('#table');
         var $deleteButton = $('#delete-button');
