@@ -6,18 +6,34 @@
       layout:decorate="~{template.html}"
       lang="vi">
 <head>
-    <title layout:fragment="title">Bảng theo dõi độ ẩm</title>
+    <title layout:fragment="title">Thiết bị cảm biến độ ẩm</title>
 </head>
 <body>
 
 <div layout:fragment="content">
     <div class="card">
         <div class="card-header">
-            <h3 class="text-center card-title">Bảng theo dõi độ ẩm</h3>
+            <h3 class="text-center card-title">Thiết bị cảm biến độ ẩm</h3>
         </div>
-        <div class="card-body">
-            <div sec:authorize="hasRole('ADMIN')" id="toolbar">
-                <button id="delete-button" class="btn btn-danger">Xóa</button>
+        <div class="card-header">
+            <div class="dropdown">
+                <button class="btn btn-primary dropdown-toggle" role="button" data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    Chế độ xem
+                </button>
+                <ul class="dropdown-menu">
+                    <li>
+                        <button id="table-view-button" class="dropdown-item">Dạng bảng</button>
+                    </li>
+                    <li>
+                        <button id="chart-view-button" class="dropdown-item">Biểu đồ</button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div id="table-view" class="card-body">
+            <div id="toolbar">
+                <button sec:authorize="hasRole('ADMIN')" id="delete-button" class="btn btn-danger">Xóa</button>
             </div>
             <table id="table"
                    class="table table-striped table-hover"
@@ -45,81 +61,150 @@
                 </thead>
             </table>
         </div>
+        <div class="card-body" id="chart-view">
+            <div id="chart"></div>
+        </div>
         <div class="card-footer">
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script th:src="@{/js/utils.js}"></script>
     <script>
-        var $table = $('#table');
-        var $deleteButton = $('#delete-button');
+        const $chart = $('#chart');
+        const $table = $('#table');
+        const $deleteButton = $('#delete-button');
+        const $chartViewButton = $('#chart-view-button');
+        const $tableViewButton = $('#table-view-button');
+        const $tableView = $('#table-view');
+        const $chartView = $('#chart-view');
 
-        $(function () {
-            $deleteButton.click(function () {
-                Swal.fire({
-                    title: "Xác nhận xóa dữ liệu?",
-                    text: "Dữ liệu sau khi xóa sẽ không thể khôi phục!",
-                    icon: "warning",
-                    showCancelButton: true,
-                    cancelButtonText: "Hủy",
-                    confirmButtonColor: "#3085d6",
-                    cancelButtonColor: "#d33",
-                    confirmButtonText: "Chắc chắn, xóa!"
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        var ids = $.map($table.bootstrapTable('getSelections'), function (row) {
-                            return row.id;
-                        });
-                        if (ids.length > 0) {
-                            $.ajax({
-                                url: '/v1/api/moisturelogs',
-                                type: 'DELETE',
-                                contentType: 'application/json',
-                                data: JSON.stringify(ids),
-                                success: function (result) {
-                                    $table.bootstrapTable('remove', {
-                                        field: 'id',
-                                        values: ids
-                                    });
-                                    Swal.fire({
-                                        title: "Đã xóa!",
-                                        icon: "success",
-                                        toast: true,
-                                        position: "top-right",
-                                        showConfirmButton: false,
-                                        timer: 1500,
-                                        timerProgressBar: true
-                                    });
-                                },
-                                error: function (error) {
-                                    console.log(error)
-                                    Swal.fire({
-                                        title: "Lỗi!",
-                                        icon: "error",
-                                        toast: true,
-                                        position: "top-right",
-                                        showConfirmButton: false,
-                                        timer: 1500,
-                                        timerProgressBar: true
-                                    });
-                                }
-                            });
-                        } else {
-                            Swal.fire({
-                                title: "Chưa chọn mục nào!",
-                                icon: "error",
-                                toast: true,
-                                position: "top-right",
-                                showConfirmButton: false,
-                                timer: 1500,
-                                timerProgressBar: true
-                            });
-                        }
-                    }
-                });
-            });
+        $(() => {
+            init();
+            $deleteButton.click(() => handleDeleteButton());
+            $chartViewButton.click(() => handleChartViewButton());
+            $tableViewButton.click(() => handleTableViewButton());
         });
+
+        function init() {
+            $chartView.hide();
+        }
+
+        function renderChart() {
+            let options = {
+                title: {
+                    text: 'Biểu đồ độ ẩm',
+                    style: {
+                        fontFamily: 'system-ui'
+                    }
+                },
+                chart: {
+                    type: 'area'
+                },
+                series: [{
+                    name: 'độ C',
+                    data: []
+                }],
+                noData: {
+                    text: 'Đang tải...'
+                },
+                xaxis: {
+                    type: 'datetime',
+                }
+            }
+            let chart = new ApexCharts(document.querySelector("#chart"), options);
+            chart.render();
+
+            let data = [];
+            $.ajax('/v1/api/moisturelogs?unpaged=true').then(function (result) {
+                $.each(result, function (i, e) {
+                    let record = []
+                    record.push(e.createdDate)
+                    record.push(e.value)
+                    data.push(record)
+                })
+                chart.updateSeries([{
+                    data: data
+                }])
+            })
+        }
+
+        function handleChartViewButton() {
+            $tableView.hide();
+            renderChart();
+            $chartView.show();
+        }
+
+        function handleTableViewButton() {
+            $tableView.show();
+            $chartView.hide();
+        }
+
+        function handleDeleteButton() {
+            Swal.fire({
+                title: "Xác nhận xóa dữ liệu?",
+                text: "Dữ liệu sau khi xóa sẽ không thể khôi phục!",
+                icon: "warning",
+                showCancelButton: true,
+                cancelButtonText: "Hủy",
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Chắc chắn, xóa!"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    var ids = $.map($table.bootstrapTable('getSelections'), function (row) {
+                        return row.id;
+                    });
+                    if (ids.length > 0) {
+                        $.ajax({
+                            url: '/v1/api/moisturelogs',
+                            type: 'DELETE',
+                            contentType: 'application/json',
+                            data: JSON.stringify(ids),
+                            success: function (result) {
+                                $table.bootstrapTable('remove', {
+                                    field: 'id',
+                                    values: ids
+                                });
+                                Swal.fire({
+                                    title: "Đã xóa!",
+                                    icon: "success",
+                                    toast: true,
+                                    position: "top-right",
+                                    showConfirmButton: false,
+                                    timer: 1500,
+                                    timerProgressBar: true
+                                });
+                            },
+                            error: function (error) {
+                                console.log(error)
+                                Swal.fire({
+                                    title: "Lỗi!",
+                                    icon: "error",
+                                    toast: true,
+                                    position: "top-right",
+                                    showConfirmButton: false,
+                                    timer: 1500,
+                                    timerProgressBar: true
+                                });
+                            }
+                        });
+                    } else {
+                        Swal.fire({
+                            title: "Chưa chọn mục nào!",
+                            icon: "error",
+                            toast: true,
+                            position: "top-right",
+                            showConfirmButton: false,
+                            timer: 1500,
+                            timerProgressBar: true
+                        });
+                    }
+                }
+            });
+        }
     </script>
+    
 </div>
 
 </body>
